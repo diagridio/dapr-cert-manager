@@ -71,14 +71,14 @@
         inherit src repo pkgs;
       };
 
-      localSystem = if pkgs.stdenv.hostPlatform.isAarch64 then "arm64" else "x86_64";
+      localSystem = if pkgs.stdenv.hostPlatform.isAarch64 then "arm64" else "amd64";
       localOS = if pkgs.stdenv.hostPlatform.isDarwin then "darwin" else "linux";
 
     in {
       packages = {
         default = (program localSystem localOS);
         image = (image localSystem version);
-        image-x86_64 = (image "x86_64" version);
+        image-x86_64 = (image "amd64" version);
         image-arm64 = (image "arm64" version);
       };
 

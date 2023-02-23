@@ -50,7 +50,7 @@ var _ = Describe("Smoke", func() {
 
 		daprCA, err := x509bundle.Parse(spiffeid.TrustDomain{}, daprSecret.Data["ca.crt"])
 		Expect(err).NotTo(HaveOccurred())
-		Expect(daprCA.X509Authorities()).To(HaveLen(1))
+		Expect(daprCA.X509Authorities()).To(HaveLen(2))
 		Expect(daprCA.HasX509Authority(cmCA.X509Authorities()[0])).To(BeTrue(), "the trust-bundle secret should have the same root CA as the cert-manager issuer")
 	})
 })
