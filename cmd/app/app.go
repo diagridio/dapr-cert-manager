@@ -6,6 +6,7 @@ import (
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/spf13/cobra"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	clientv1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -46,6 +47,9 @@ func NewCommand() *cobra.Command {
 			eventBroadcaster.StartRecordingToSink(&clientv1.EventSinkImpl{Interface: cl.CoreV1().Events("")})
 
 			scheme := runtime.NewScheme()
+			if err := corev1.AddToScheme(scheme); err != nil {
+				return fmt.Errorf("error adding corev1 to scheme: %w", err)
+			}
 			if err := cmapi.AddToScheme(scheme); err != nil {
 				return fmt.Errorf("error adding cert-manager scheme: %w", err)
 			}
