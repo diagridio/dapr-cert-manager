@@ -122,7 +122,7 @@ let
       ${smoke-binary}/bin/dapr-cert-manager-helper-smoke \
         --dapr-namespace dapr-system \
         --certificate-name dapr-trust-bundle \
-        --kubeconfig "$KUBECONFIG"
+        --kubeconfig-path "$KUBECONFIG"
     '';
   };
 
