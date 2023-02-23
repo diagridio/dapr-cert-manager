@@ -21,9 +21,13 @@
       aarch64-darwin
     ];
 
+    repo = ./.;
+
     # We only source go files to have better cache hits when actively working
     # on non-go files.
     src = nixpkgs.lib.sourceFilesBySuffices ./. [ ".go" "go.mod" "go.sum" "gomod2nix.toml" ];
+
+    version = "0.1.0-alpha.0";
 
   in utils.lib.eachSystem targetSystems (system:
     let
@@ -42,6 +46,7 @@
         name = "dapr-cert-manager-helper";
         modules = ./gomod2nix.toml;
         inherit src;
+        subPackages = [ "cmd" ];
       }).overrideAttrs(old: old // {
         GOOS = os;
         GOARCH = sys;
@@ -52,18 +57,18 @@
         '';
       });
 
-      image = sys: pkgs.dockerTools.buildLayeredImage {
+      image = sys: tag: pkgs.dockerTools.buildLayeredImage {
         name = "dapr-cert-manager-helper";
-        tag = "dev";
+        inherit tag;
         contents = with pkgs; [
           (program sys "linux")
         ];
       };
 
       ci = import ./nix/ci.nix {
-        inherit pkgs;
         gomod2nix = (gomod2nix.packages.${system}.default);
-        inherit src;
+        image = (image localSystem "dev");
+        inherit src repo pkgs;
       };
 
       localSystem = if pkgs.stdenv.hostPlatform.isAarch64 then "arm64" else "x86_64";
@@ -72,13 +77,13 @@
     in {
       packages = {
         default = (program localSystem localOS);
-        image-x86_64 = (image "x86_64");
-        image-arm64 = (image "arm64");
+        image = (image localSystem version);
+        image-x86_64 = (image "x86_64" version);
+        image-arm64 = (image "arm64" version);
       };
 
       apps = {
-        check = ci.check;
-        update = ci.update;
+        inherit (ci) check update smoke;
         default = {type = "app"; program = "${self.packages.${system}.default}/bin/dapr-cert-manager-helper"; };
       };
 

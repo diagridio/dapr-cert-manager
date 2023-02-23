@@ -79,7 +79,7 @@ func (t *trustbundle) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, err
 	}
 
-	dbg.Info("found cert-manager Certificate resource")
+	dbg.Info("found cert-manager Certificate resource", "cert", cert.Name)
 
 	var cmSecret corev1.Secret
 	err = t.lister.Get(ctx, types.NamespacedName{
@@ -87,14 +87,14 @@ func (t *trustbundle) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		Name:      cert.Spec.SecretName,
 	}, &cmSecret)
 	if apierrors.IsNotFound(err) {
-		dbg.Info("cert-manager Secret does not exist")
+		dbg.Info("cert-manager Secret does not exist", "secret", cert.Spec.SecretName)
 		return ctrl.Result{}, nil
 	}
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	dbg.Info("found cert-manager Secret")
+	dbg.Info("found cert-manager Secret", "secret", cert.Spec.SecretName)
 
 	var daprSecret corev1.Secret
 	err = t.lister.Get(ctx, types.NamespacedName{
@@ -111,7 +111,7 @@ func (t *trustbundle) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 
 	dbg.Info("found dapr trust-bundle Secret")
 
-	ta, shouldReconcile, err := t.shouldReconcileSecret(log, dbg, cmSecret, daprSecret)
+	ta, shouldReconcile, err := t.shouldReconcileSecret(log, dbg, daprSecret, cmSecret)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

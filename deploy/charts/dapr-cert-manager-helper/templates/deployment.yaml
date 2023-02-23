@@ -31,10 +31,10 @@ spec:
         args:
           - "--log-level={{.Values.app.logLevel}}"
           - "--metrics-port={{.Values.app.metrics.port}}"
-          - "--readiness-probe-path={{.Values.app.readinessProbe.path}}"
+          - "--readiness-probe-port={{.Values.app.readinessProbe.port}}"
             # app
           - "--dapr-namespace={{.Values.app.daprNamespace}}"
-          - "--trust-bundle-certificate-name={{.Values.app.trustBundleCertificateName}}"
+          - "--trust-bundle-certificate-name={{.Values.app.certificateName}}"
           - "--trust-anchor-file-path={{.Values.app.trustAnchorFilePath}}"
 
         {{- if .Values.volumeMounts }}

@@ -1,13 +1,18 @@
 package app
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/spf13/cobra"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
+	clientv1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/diagridio/dapr-cert-manager-helper/cmd/app/options"
@@ -41,22 +46,41 @@ func NewCommand() *cobra.Command {
 				return fmt.Errorf("error adding cert-manager scheme: %w", err)
 			}
 
+			cl, err := kubernetes.NewForConfig(opts.RestConfig)
+			if err != nil {
+				return fmt.Errorf("error creating kubernetes client: %s", err.Error())
+			}
+
+			mlog := opts.Logr.WithName("manager")
+			eventBroadcaster := record.NewBroadcaster()
+			eventBroadcaster.StartLogging(func(format string, args ...any) { mlog.V(3).Info(fmt.Sprintf(format, args...)) })
+			eventBroadcaster.StartRecordingToSink(&clientv1.EventSinkImpl{Interface: cl.CoreV1().Events("")})
+
 			mgr, err := ctrl.NewManager(opts.RestConfig, ctrl.Options{
 				Scheme:                        scheme,
+				EventBroadcaster:              eventBroadcaster,
 				LeaderElection:                true,
 				LeaderElectionNamespace:       opts.DaprNamespace,
 				LeaderElectionID:              "dapr-cert-manager-helper",
 				LeaderElectionReleaseOnCancel: true,
 				ReadinessEndpointName:         "/readyz",
-				HealthProbeBindAddress:        fmt.Sprintf("0.0.0.0:%d", opts.ReadyzPort),
-				MetricsBindAddress:            fmt.Sprintf("0.0.0.0:%d", opts.MetricsPort),
-				Logger:                        opts.Logr.WithName("manager"),
+				HealthProbeBindAddress:        fmt.Sprintf(":%d", opts.ReadyzPort),
+				MetricsBindAddress:            fmt.Sprintf(":%d", opts.MetricsPort),
+				Logger:                        mlog,
 				Namespace:                     opts.DaprNamespace,
 				LeaderElectionResourceLock:    "leases",
 			})
 			if err != nil {
 				return fmt.Errorf("failed to create manager: %w", err)
 			}
+
+			// Add readiness check that the manager's informers have been synced.
+			mgr.AddReadyzCheck("informers_synced", func(req *http.Request) error {
+				if mgr.GetCache().WaitForCacheSync(req.Context()) {
+					return nil
+				}
+				return errors.New("informers not synced")
+			})
 
 			ctx := ctrl.SetupSignalHandler()
 			var taSource x509bundle.Source
