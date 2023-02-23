@@ -273,6 +273,7 @@ func AddTrustBundle(ctx context.Context, mgr ctrl.Manager, opts Options) error {
 					Type:   cmapi.CertificateConditionReady,
 					Status: cmmeta.ConditionTrue,
 				}) {
+					log.Info("Certificate is not ready yet", "name", obj.GetName(), "namespace", obj.GetNamespace())
 					// Don't bother reconciling if the Certificate is not ready.
 					return nil
 				}

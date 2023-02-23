@@ -43,11 +43,11 @@ type Options struct {
 	// which signs and manages the dapr trust bundle.
 	TrustBundleCertificateName string
 
-	// TrustAnchorFileName is the name of the file which contains the trust
+	// TrustAnchorFilePath is the name of the file which contains the trust
 	// anchor.
 	// If empty, the trust anchor will be sourced from the cert-manager
 	// Certificate.
-	TrustAnchorFileName string
+	TrustAnchorFilePath string
 }
 
 // New constructs a new Options.
@@ -83,11 +83,11 @@ func (o *Options) Complete() error {
 		return fmt.Errorf("--trust-bundle-certificate-name must be set")
 	}
 
-	if len(o.TrustAnchorFileName) > 0 {
-		if _, err := os.Stat(o.TrustAnchorFileName); err != nil {
-			return fmt.Errorf("failed to get trust anchor file %q: %w", o.TrustAnchorFileName, err)
+	if len(o.TrustAnchorFilePath) > 0 {
+		if _, err := os.Stat(o.TrustAnchorFilePath); err != nil {
+			return fmt.Errorf("failed to get trust anchor file %q: %w", o.TrustAnchorFilePath, err)
 		}
-		log.Info("using trust anchor from file", "file", o.TrustAnchorFileName)
+		log.Info("using trust anchor from file", "file", o.TrustAnchorFilePath)
 	} else {
 		log.Info("trust anchor file name not set, will use cert-manager Certificate")
 	}
@@ -142,7 +142,7 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 		"trust-bundle-certificate-name", "dapr-trust-bundle",
 		"Name of the cert-manager Certificate which signs and manages the dapr trust bundle. Certificate must be in the same namespace as to where dapr is installed.")
 
-	fs.StringVar(&o.TrustAnchorFileName,
-		"trust-anchor-file-name", "",
+	fs.StringVar(&o.TrustAnchorFilePath,
+		"trust-anchor-file-path", "",
 		"Optional name of the file which contains the trust anchor. If empty, the trust anchor will be sourced from the cert-manager Certificate.")
 }

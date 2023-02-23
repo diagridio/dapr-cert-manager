@@ -8,9 +8,6 @@ import (
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
-	clientv1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/diagridio/dapr-cert-manager-helper/cmd/app/options"
@@ -36,16 +33,6 @@ func NewCommand() *cobra.Command {
 				return err
 			}
 
-			cl, err := kubernetes.NewForConfig(opts.RestConfig)
-			if err != nil {
-				return fmt.Errorf("error creating kubernetes client: %s", err.Error())
-			}
-
-			mlog := opts.Logr.WithName("manager")
-			eventBroadcaster := record.NewBroadcaster()
-			eventBroadcaster.StartLogging(func(format string, args ...interface{}) { mlog.V(3).Info(fmt.Sprintf(format, args...)) })
-			eventBroadcaster.StartRecordingToSink(&clientv1.EventSinkImpl{Interface: cl.CoreV1().Events("")})
-
 			scheme := runtime.NewScheme()
 			if err := corev1.AddToScheme(scheme); err != nil {
 				return fmt.Errorf("error adding corev1 to scheme: %w", err)
@@ -56,7 +43,6 @@ func NewCommand() *cobra.Command {
 
 			mgr, err := ctrl.NewManager(opts.RestConfig, ctrl.Options{
 				Scheme:                        scheme,
-				EventBroadcaster:              eventBroadcaster,
 				LeaderElection:                true,
 				LeaderElectionNamespace:       opts.DaprNamespace,
 				LeaderElectionID:              "dapr-cert-manager-helper",
@@ -64,7 +50,7 @@ func NewCommand() *cobra.Command {
 				ReadinessEndpointName:         "/readyz",
 				HealthProbeBindAddress:        fmt.Sprintf("0.0.0.0:%d", opts.ReadyzPort),
 				MetricsBindAddress:            fmt.Sprintf("0.0.0.0:%d", opts.MetricsPort),
-				Logger:                        mlog,
+				Logger:                        opts.Logr.WithName("manager"),
 				Namespace:                     opts.DaprNamespace,
 				LeaderElectionResourceLock:    "leases",
 			})
@@ -74,10 +60,10 @@ func NewCommand() *cobra.Command {
 
 			ctx := ctrl.SetupSignalHandler()
 			var taSource x509bundle.Source
-			if len(opts.TrustAnchorFileName) > 0 {
+			if len(opts.TrustAnchorFilePath) > 0 {
 				ta := trustanchor.New(trustanchor.Options{
 					Log:             opts.Logr,
-					TrustBundlePath: opts.TrustAnchorFileName,
+					TrustBundlePath: opts.TrustAnchorFilePath,
 				})
 				if err := mgr.Add(ta); err != nil {
 					return err

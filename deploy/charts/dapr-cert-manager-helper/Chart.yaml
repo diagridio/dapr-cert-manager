@@ -1,0 +1,17 @@
+apiVersion: v2
+
+name: dapr-cert-manager-helper
+type: application
+description: A Helm chart for dapr-cert-manager-helper
+
+home: https://diagrid.io
+maintainers:
+- name: diagrid
+  email: engineering@diagrid.io
+  url: https://diagrid.io
+sources:
+- https://github.com/diagrid/dapr-cert-manager-helper
+
+appVersion: v0.1.0-alpha.0
+version: v0.1.0-alpha.0
+

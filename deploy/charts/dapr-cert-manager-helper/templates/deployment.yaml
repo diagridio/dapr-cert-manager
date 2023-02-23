@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dapr-cert-manager-helper.name" . }}
+  labels:
+{{ include "dapr-cert-manager-helper.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "dapr-cert-manager-helper.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "dapr-cert-manager-helper.name" . }}
+    spec:
+      serviceAccountName: {{ include "dapr-cert-manager-helper.name" . }}
+      containers:
+      - name: {{ include "dapr-cert-manager-helper.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.app.metrics.port }}
+        readinessProbe:
+          httpGet:
+            port: {{ .Values.app.readinessProbe.port }}
+            path: "/readyz"
+          initialDelaySeconds: 1
+          periodSeconds: 3
+        command: ["dapr-cert-manager-helper"]
+        args:
+          - "--log-level={{.Values.app.logLevel}}"
+          - "--metrics-port={{.Values.app.metrics.port}}"
+          - "--readiness-probe-path={{.Values.app.readinessProbe.path}}"
+            # app
+          - "--dapr-namespace={{.Values.app.daprNamespace}}"
+          - "--trust-bundle-certificate-name={{.Values.app.trustBundleCertificateName}}"
+          - "--trust-anchor-file-path={{.Values.app.trustAnchorFilePath}}"
+
+        {{- if .Values.volumeMounts }}
+        volumeMounts:
+        {{- with .Values.volumeMounts }}
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- end }}
+
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: false
+          {{- if .Values.app.securityContext.seccompProfileEnabled }}
+          seccompProfile:
+            type: RuntimeDefault
+          {{- end }}
+
+      {{- if .Values.volumes }}
+      volumes:
+      {{- with .Values.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- end }}
