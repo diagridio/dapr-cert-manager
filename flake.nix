@@ -26,6 +26,7 @@
     # We only source go files to have better cache hits when actively working
     # on non-go files.
     src = nixpkgs.lib.sourceFilesBySuffices ./. [ ".go" "go.mod" "go.sum" "gomod2nix.toml" ];
+    src-test = nixpkgs.lib.sourceFilesBySuffices ./test [ ".go" "go.mod" "go.sum" "gomod2nix.toml" ];
 
     version = "0.1.0-alpha.0";
 
@@ -68,7 +69,7 @@
       ci = import ./nix/ci.nix {
         gomod2nix = (gomod2nix.packages.${system}.default);
         image = (image localSystem "dev");
-        inherit src repo pkgs;
+        inherit src src-test repo pkgs;
       };
 
       localSystem = if pkgs.stdenv.hostPlatform.isAarch64 then "arm64" else "amd64";
@@ -83,7 +84,7 @@
       };
 
       apps = {
-        inherit (ci) check update smoke;
+        inherit (ci) check update smoke demo;
         default = {type = "app"; program = "${self.packages.${system}.default}/bin/dapr-cert-manager-helper"; };
       };
 

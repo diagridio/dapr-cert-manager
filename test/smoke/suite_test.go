@@ -37,7 +37,10 @@ var _ = Describe("Smoke", func() {
 		Eventually(func() bool {
 			Expect(cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: cnf.CertificateName}, &cert)).NotTo(HaveOccurred())
 
-			Expect(cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: cert.Spec.SecretName}, &cmSecret)).NotTo(HaveOccurred())
+			err := cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: cert.Spec.SecretName}, &cmSecret)
+			if err != nil {
+				return false
+			}
 
 			Expect(cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: "dapr-trust-bundle"}, &daprSecret)).NotTo(HaveOccurred())
 

@@ -7,7 +7,6 @@ import (
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/spf13/cobra"
-	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -83,16 +82,15 @@ func NewCommand() *cobra.Command {
 			})
 
 			ctx := ctrl.SetupSignalHandler()
-			var taSource x509bundle.Source
+			var taSource trustanchor.Interface
 			if len(opts.TrustAnchorFilePath) > 0 {
-				ta := trustanchor.New(trustanchor.Options{
+				taSource = trustanchor.New(trustanchor.Options{
 					Log:             opts.Logr,
 					TrustBundlePath: opts.TrustAnchorFilePath,
 				})
-				if err := mgr.Add(ta); err != nil {
+				if err := mgr.Add(taSource); err != nil {
 					return err
 				}
-				taSource = ta
 			}
 
 			if err := controller.AddTrustBundle(ctx, mgr, controller.Options{

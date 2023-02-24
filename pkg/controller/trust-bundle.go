@@ -9,6 +9,7 @@ import (
 	cmutil "github.com/cert-manager/cert-manager/pkg/api/util"
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
+	"github.com/diagridio/dapr-cert-manager-helper/pkg/trustanchor"
 	"github.com/go-logr/logr"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
@@ -40,7 +41,7 @@ type Options struct {
 
 	// TrustAnchor is used for the trust-bundle trust anchors. If empty the nil,
 	// the `ca.crt` created by cert-manager will be used.
-	TrustAnchor x509bundle.Source
+	TrustAnchor trustanchor.Interface
 }
 
 // trustbundle is the dapr-trust-bundle Secret reconciler.
@@ -244,7 +245,7 @@ func AddTrustBundle(ctx context.Context, mgr ctrl.Manager, opts Options) error {
 	// TODO: @joshvanl add custom source to re-reconcile when the trust anchor
 	// changes on file.
 
-	return ctrl.NewControllerManagedBy(mgr).
+	controller := ctrl.NewControllerManagedBy(mgr).
 		// Watch the target trust-bundle Secret.
 		For(new(corev1.Secret), builder.OnlyMetadata, builder.WithPredicates(predicate.NewPredicateFuncs(func(obj client.Object) bool {
 			return obj.GetName() == "dapr-trust-bundle" && obj.GetNamespace() == opts.DaprNamespace
@@ -284,6 +285,13 @@ func AddTrustBundle(ctx context.Context, mgr ctrl.Manager, opts Options) error {
 		), builder.OnlyMetadata, builder.WithPredicates(predicate.NewPredicateFuncs(func(obj client.Object) bool {
 			// Only reconcile the cert-manager Certificate for the trust-bundle.
 			return obj.GetName() == opts.TrustBundleCertificateName && obj.GetNamespace() == opts.DaprNamespace
-		}))).
-		Complete(tb)
+		})))
+
+	if opts.TrustAnchor != nil {
+		controller.Watches(&source.Channel{Source: opts.TrustAnchor.EventChannel()}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []ctrl.Request {
+			return []ctrl.Request{{NamespacedName: types.NamespacedName{Namespace: opts.DaprNamespace, Name: "dapr-trust-bundle"}}}
+		}))
+	}
+
+	return controller.Complete(tb)
 }

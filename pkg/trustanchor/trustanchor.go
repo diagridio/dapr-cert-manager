@@ -11,6 +11,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -21,10 +22,11 @@ type Options struct {
 	TrustBundlePath string
 }
 
-type TrustAnchor interface {
+type Interface interface {
 	x509bundle.Source
 	manager.LeaderElectionRunnable
 	manager.Runnable
+	EventChannel() <-chan event.GenericEvent
 }
 
 type internal struct {
@@ -32,9 +34,11 @@ type internal struct {
 	path   string
 	bundle *x509bundle.Bundle
 	lock   sync.RWMutex
+	env    []chan<- event.GenericEvent
+	wg     sync.WaitGroup
 }
 
-func New(ops Options) TrustAnchor {
+func New(ops Options) Interface {
 	return &internal{
 		log:  ops.Log.WithName("trustanchor"),
 		path: ops.TrustBundlePath,
@@ -42,6 +46,7 @@ func New(ops Options) TrustAnchor {
 }
 
 func (i *internal) Start(ctx context.Context) error {
+	defer i.wg.Done()
 	i.log.Info("starting trust anchor manager")
 
 	// Load the trust bundle from the file.
@@ -50,9 +55,7 @@ func (i *internal) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to load trust bundle from file %q: %w", i.path, err)
 	}
 
-	i.lock.Lock()
-	i.bundle = bundle
-	i.lock.Unlock()
+	i.updateBundle(ctx, bundle)
 
 	errCh := make(chan error)
 	eventCh := make(chan struct{})
@@ -80,9 +83,7 @@ func (i *internal) Start(ctx context.Context) error {
 				cancel()
 				return errors.Join(err, <-errCh)
 			}
-			i.lock.Lock()
-			i.bundle = bundle
-			i.lock.Unlock()
+			i.updateBundle(ctx, bundle)
 		}
 	}
 }
@@ -90,6 +91,31 @@ func (i *internal) Start(ctx context.Context) error {
 // We want to load the trust anchors, even if we are not the leader.
 func (i *internal) NeedLeaderElection() bool {
 	return false
+}
+
+func (i *internal) updateBundle(ctx context.Context, bundle *x509bundle.Bundle) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+	i.bundle = bundle
+
+	i.wg.Add(len(i.env))
+	for _, env := range i.env {
+		go func(env chan<- event.GenericEvent) {
+			defer i.wg.Done()
+			select {
+			case env <- event.GenericEvent{}:
+			case <-ctx.Done():
+			}
+		}(env)
+	}
+}
+
+func (i *internal) EventChannel() <-chan event.GenericEvent {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+	env := make(chan event.GenericEvent)
+	i.env = append(i.env, env)
+	return env
 }
 
 func (i *internal) GetX509BundleForTrustDomain(_ spiffeid.TrustDomain) (*x509bundle.Bundle, error) {

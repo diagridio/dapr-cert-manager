@@ -1,4 +1,11 @@
-{ pkgs, gomod2nix, image, src, repo }:
+{
+pkgs,
+gomod2nix,
+image,
+src,
+src-test,
+repo,
+}:
 
 let
   checkgomod2nix = pkgs.writeShellApplication {
@@ -19,8 +26,8 @@ let
 
   smoke-binary = (pkgs.buildGoApplication {
     name = "dapr-cert-manager-helper-smoke";
-    src = "${repo}/test/smoke";
-    modules = "${repo}/test/smoke/gomod2nix.toml";
+    src = "${src-test}/smoke";
+    modules = "${src-test}/smoke/gomod2nix.toml";
   }).overrideAttrs(old: old // {
     # We need to use a custom `buildPhase` so that we can build the smoke
     # binary using `go test` instead of `go build`.
@@ -29,9 +36,8 @@ let
     '';
   });
 
-
-  smoke = pkgs.writeShellApplication {
-    name = "smoke";
+  demo = pkgs.writeShellApplication {
+    name = "demo";
     runtimeInputs = with pkgs; [
       kind
       kubernetes-helm
@@ -40,19 +46,21 @@ let
       docker
     ];
     text = ''
-      tmpdir=$(mktemp -d)
-      echo ">> using tmpdir: $tmpdir"
-      trap 'rm -rf -- "$tmpdir"' EXIT
+      TMPDIR="''${TMPDIR:-$(mktemp -d)}"
+      echo ">> using tmpdir: $TMPDIR"
 
-      trap 'kind delete cluster --name dapr-cert-manager-helper' EXIT
-      kind create cluster --kubeconfig "$tmpdir/kubeconfig" --name dapr-cert-manager-helper --image kindest/node:v1.25.3
+      kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager-helper --image kindest/node:v1.25.3
 
       docker load < ${image}
       kind load docker-image --name dapr-cert-manager-helper dapr-cert-manager-helper:dev
-      export KUBECONFIG="$tmpdir/kubeconfig"
+      export KUBECONFIG="$TMPDIR/kubeconfig"
       echo ">> using kubeconfig: $KUBECONFIG"
+      echo "export KUBECONFIG=$KUBECONFIG"
+      echo ">> installing cert-manager, dapr-cert-manager-helper and dapr"
 
       kubectl create namespace dapr-system
+
+      dapr init -k --wait
 
       helm repo add --force-update jetstack https://charts.jetstack.io
       helm upgrade -i cert-manager jetstack/cert-manager \
@@ -67,10 +75,12 @@ let
         --set image.repository=dapr-cert-manager-helper \
         --set image.tag=dev \
         --set image.pullPolicy=Never \
-        --set app.logLevel=4 \
+        --set app.logLevel=3 \
         --wait &
 
       wait
+
+      echo ">> creating dapr root CA and intermediate CA"
 
       cat <<EOF | kubectl apply -f -
       apiVersion: cert-manager.io/v1
@@ -90,6 +100,10 @@ let
         secretName: dapr-root-ca
         commonName: dapr-root-ca-from-cert-manager
         isCA: true
+        privateKey:
+          algorithm: ECDSA
+          size: 256
+          rotationPolicy: Always
         issuerRef:
           name: selfsigned
       ---
@@ -111,18 +125,40 @@ let
         secretName: dapr-trust-bundle-from-cert-manager
         commonName: dapr-issuer-from-cert-manager
         isCA: true
+        privateKey:
+          algorithm: ECDSA
+          size: 256
+          rotationPolicy: Always
         dnsNames:
         - cluster.local
         issuerRef:
           name: dapr-trust-bundle
       EOF
+    '';
+  };
 
-      dapr init -k --wait
+  smoke = pkgs.writeShellApplication {
+    name = "smoke";
+    runtimeInputs = with pkgs; [
+      kind
+      kubernetes-helm
+      kubectl
+      dapr-cli
+      docker
+    ];
+    text = ''
+      TMPDIR=$(mktemp -d)
+      trap 'rm -rf -- "$TMPDIR"' EXIT
+      trap 'kind delete cluster --name dapr-cert-manager-helper' EXIT
+
+      TMPDIR=$TMPDIR ${demo}/bin/demo
+
+      echo ">> running smoke test"
 
       ${smoke-binary}/bin/dapr-cert-manager-helper-smoke \
         --dapr-namespace dapr-system \
         --certificate-name dapr-trust-bundle \
-        --kubeconfig-path "$KUBECONFIG"
+        --kubeconfig-path "$TMPDIR/kubeconfig"
     '';
   };
 
@@ -152,5 +188,6 @@ let
 in {
   update = {type = "app"; program = "${update}/bin/update";};
   check = {type = "app"; program = "${check}/bin/check";};
+  demo = {type = "app"; program = "${demo}/bin/demo";};
   smoke = {type = "app"; program = "${smoke}/bin/smoke";};
 }
