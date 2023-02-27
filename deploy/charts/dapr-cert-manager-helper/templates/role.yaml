@@ -14,7 +14,7 @@ rules:
   - "get"
   - "list"
   - "watch"
-# Only allow update to the dapr-trust-bundle Secret.
+# Only allow update to the dapr Secrets.
 - apiGroups:
   - ""
   resources:
@@ -23,6 +23,9 @@ rules:
   - "update"
   resourceNames:
   - dapr-trust-bundle
+  - dapr-webhook-cert
+  - dapr-webhook-ca
+  - dapr-sidecar-injector-cert
 - apiGroups:
   - "cert-manager.io"
   resources:

@@ -36,9 +36,22 @@ let
     '';
   });
 
+  demo-loadimage = pkgs.writeShellApplication {
+    name = "demo-loadimage";
+    runtimeInputs = with pkgs; [
+      docker
+      kind
+    ];
+    text = ''
+      docker load < ${image}
+      kind load docker-image --name dapr-cert-manager-helper dapr-cert-manager-helper:dev
+    '';
+  };
+
   demo = pkgs.writeShellApplication {
     name = "demo";
     runtimeInputs = with pkgs; [
+      demo-loadimage
       kind
       kubernetes-helm
       kubectl
@@ -51,8 +64,7 @@ let
 
       kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager-helper --image kindest/node:v1.25.3
 
-      docker load < ${image}
-      kind load docker-image --name dapr-cert-manager-helper dapr-cert-manager-helper:dev
+      ${demo-loadimage}/bin/demo-loadimage
       export KUBECONFIG="$TMPDIR/kubeconfig"
       echo ">> using kubeconfig: $KUBECONFIG"
       echo "export KUBECONFIG=$KUBECONFIG"
@@ -82,58 +94,7 @@ let
 
       echo ">> creating dapr root CA and intermediate CA"
 
-      cat <<EOF | kubectl apply -f -
-      apiVersion: cert-manager.io/v1
-      kind: Issuer
-      metadata:
-        name: selfsigned
-        namespace: dapr-system
-      spec:
-        selfSigned: {}
-      ---
-      apiVersion: cert-manager.io/v1
-      kind: Certificate
-      metadata:
-        name: dapr-root-ca
-        namespace: dapr-system
-      spec:
-        secretName: dapr-root-ca
-        commonName: dapr-root-ca-from-cert-manager
-        isCA: true
-        privateKey:
-          algorithm: ECDSA
-          size: 256
-          rotationPolicy: Always
-        issuerRef:
-          name: selfsigned
-      ---
-      apiVersion: cert-manager.io/v1
-      kind: Issuer
-      metadata:
-        name: dapr-trust-bundle
-        namespace: dapr-system
-      spec:
-        ca:
-          secretName: dapr-root-ca
-      ---
-      apiVersion: cert-manager.io/v1
-      kind: Certificate
-      metadata:
-        name: dapr-trust-bundle
-        namespace: dapr-system
-      spec:
-        secretName: dapr-trust-bundle-from-cert-manager
-        commonName: dapr-issuer-from-cert-manager
-        isCA: true
-        privateKey:
-          algorithm: ECDSA
-          size: 256
-          rotationPolicy: Always
-        dnsNames:
-        - cluster.local
-        issuerRef:
-          name: dapr-trust-bundle
-      EOF
+      kubectl apply -f ${repo}/test/smoke/cert-manager-certs.yaml
     '';
   };
 
@@ -157,7 +118,9 @@ let
 
       ${smoke-binary}/bin/dapr-cert-manager-helper-smoke \
         --dapr-namespace dapr-system \
-        --certificate-name dapr-trust-bundle \
+        --certificate-name-trust-bundle dapr-trust-bundle \
+        --certificate-name-webhook dapr-webhook \
+        --certificate-name-sidecar-injector dapr-sidecar-injector \
         --kubeconfig-path "$TMPDIR/kubeconfig"
     '';
   };
@@ -188,6 +151,7 @@ let
 in {
   update = {type = "app"; program = "${update}/bin/update";};
   check = {type = "app"; program = "${check}/bin/check";};
+  demo-loadimage = {type = "app"; program = "${demo-loadimage}/bin/demo-loadimage";};
   demo = {type = "app"; program = "${demo}/bin/demo";};
   smoke = {type = "app"; program = "${smoke}/bin/smoke";};
 }

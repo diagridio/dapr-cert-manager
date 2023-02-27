@@ -43,8 +43,16 @@ type Options struct {
 	// which signs and manages the dapr trust bundle.
 	TrustBundleCertificateName string
 
+	// WebhookCertificateName is the name of the cert-manager Certificate
+	// which signs and manages the dapr webhook certificate.
+	WebhookCertificateName string
+
+	// SidecarInjectorCertificateName is the name of the cert-manager Certificate
+	// which signs and manages the dapr sidecar injector certificate.
+	SidecarInjectorCertificateName string
+
 	// TrustAnchorFilePath is the name of the file which contains the trust
-	// anchor.
+	// anchor for all 3 root CAs.
 	// If empty, the trust anchor will be sourced from the cert-manager
 	// Certificate.
 	TrustAnchorFilePath string
@@ -141,6 +149,12 @@ func (o *Options) addAppFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.TrustBundleCertificateName,
 		"trust-bundle-certificate-name", "dapr-trust-bundle",
 		"Name of the cert-manager Certificate which signs and manages the dapr trust bundle. Certificate must be in the same namespace as to where dapr is installed.")
+	fs.StringVar(&o.WebhookCertificateName,
+		"webhook-certificate-name", "dapr-webhook",
+		"Name of the cert-manager Certificate which signs and manages the dapr webhook certificate. Certificate must be in the same namespace as to where dapr is installed.")
+	fs.StringVar(&o.SidecarInjectorCertificateName,
+		"sidecar-injector-certificate-name", "dapr-sidecar-injector",
+		"Name of the cert-manager Certificate which signs and manages the dapr sidecar injector certificate. Certificate must be in the same namespace as to where dapr is installed.")
 
 	fs.StringVar(&o.TrustAnchorFilePath,
 		"trust-anchor-file-path", "",

@@ -84,7 +84,7 @@
       };
 
       apps = {
-        inherit (ci) check update smoke demo;
+        inherit (ci) check update smoke demo demo-loadimage;
         default = {type = "app"; program = "${self.packages.${system}.default}/bin/dapr-cert-manager-helper"; };
       };
 

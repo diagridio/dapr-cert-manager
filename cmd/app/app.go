@@ -94,10 +94,12 @@ func NewCommand() *cobra.Command {
 			}
 
 			if err := controller.AddTrustBundle(ctx, mgr, controller.Options{
-				Log:                        opts.Logr,
-				DaprNamespace:              opts.DaprNamespace,
-				TrustBundleCertificateName: opts.TrustBundleCertificateName,
-				TrustAnchor:                taSource,
+				Log:                            opts.Logr,
+				DaprNamespace:                  opts.DaprNamespace,
+				TrustBundleCertificateName:     opts.TrustBundleCertificateName,
+				WebhookCertificateName:         opts.WebhookCertificateName,
+				SidecarInjectorCertificateName: opts.SidecarInjectorCertificateName,
+				TrustAnchor:                    taSource,
 			}); err != nil {
 				return err
 			}
