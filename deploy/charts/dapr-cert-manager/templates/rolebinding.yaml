@@ -1,0 +1,15 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "dapr-cert-manager.name" . }}
+  namespace: {{ .Values.app.daprNamespace }}
+  labels:
+{{ include "dapr-cert-manager.labels" . | indent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "dapr-cert-manager.name" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "dapr-cert-manager.name" . }}
+  namespace: {{ .Release.Namespace }}

@@ -1,0 +1,51 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "dapr-cert-manager.name" . }}
+  namespace: {{ .Values.app.daprNamespace }}
+  labels:
+{{ include "dapr-cert-manager.labels" . | indent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - "secrets"
+  verbs:
+  - "get"
+  - "list"
+  - "watch"
+# Only allow update to the dapr Secrets.
+- apiGroups:
+  - ""
+  resources:
+  - "secrets"
+  verbs:
+  - "update"
+  resourceNames:
+  - dapr-trust-bundle
+  - dapr-webhook-cert
+  - dapr-webhook-ca
+  - dapr-sidecar-injector-cert
+- apiGroups:
+  - "cert-manager.io"
+  resources:
+  - "certificates"
+  verbs:
+  - "get"
+  - "list"
+  - "watch"
+- apiGroups:
+  - "coordination.k8s.io"
+  resources:
+  - "leases"
+  verbs:
+  - "get"
+  - "create"
+  - "update"
+  - "watch"
+  - "list"
+- apiGroups:
+  - ""
+  resources:
+  - "events"
+  verbs: ["create", "patch"]

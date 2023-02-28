@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dapr-cert-manager.name" . }}
+  labels:
+{{ include "dapr-cert-manager.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "dapr-cert-manager.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "dapr-cert-manager.name" . }}
+    spec:
+      serviceAccountName: {{ include "dapr-cert-manager.name" . }}
+      containers:
+      - name: {{ include "dapr-cert-manager.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.app.metrics.port }}
+        readinessProbe:
+          httpGet:
+            port: {{ .Values.app.readinessProbe.port }}
+            path: "/readyz"
+          initialDelaySeconds: 1
+          periodSeconds: 3
+        command: ["dapr-cert-manager"]
+        args:
+          - "--log-level={{.Values.app.logLevel}}"
+          - "--metrics-port={{.Values.app.metrics.port}}"
+          - "--readiness-probe-port={{.Values.app.readinessProbe.port}}"
+            # app
+          - "--dapr-namespace={{.Values.app.daprNamespace}}"
+          - "--trust-bundle-certificate-name={{.Values.app.trustBundleCertificateName}}"
+          - "--sidecar-injector-certificate-name={{.Values.app.sidecarInjectorCertificateName}}"
+          - "--webhook-certificate-name={{.Values.app.webhookCertificateName}}"
+          - "--trust-anchor-file-path={{.Values.app.trustAnchorFilePath}}"
+
+        {{- if .Values.volumeMounts }}
+        volumeMounts:
+        {{- with .Values.volumeMounts }}
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- end }}
+
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: false
+          {{- if .Values.app.securityContext.seccompProfileEnabled }}
+          seccompProfile:
+            type: RuntimeDefault
+          {{- end }}
+
+      {{- if .Values.volumes }}
+      volumes:
+      {{- with .Values.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- end }}
