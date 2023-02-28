@@ -25,14 +25,14 @@ let
   };
 
   smoke-binary = (pkgs.buildGoApplication {
-    name = "dapr-cert-manager-helper-smoke";
+    name = "dapr-cert-manager-smoke";
     src = "${src-test}/smoke";
     modules = "${src-test}/smoke/gomod2nix.toml";
   }).overrideAttrs(old: old // {
     # We need to use a custom `buildPhase` so that we can build the smoke
     # binary using `go test` instead of `go build`.
     buildPhase = ''
-      go test -v --race -o $GOPATH/bin/dapr-cert-manager-helper-smoke -c ./.
+      go test -v --race -o $GOPATH/bin/dapr-cert-manager-smoke -c ./.
     '';
   });
 
@@ -44,7 +44,7 @@ let
     ];
     text = ''
       docker load < ${image}
-      kind load docker-image --name dapr-cert-manager-helper dapr-cert-manager-helper:dev
+      kind load docker-image --name dapr-cert-manager dapr-cert-manager:dev
     '';
   };
 
@@ -62,13 +62,13 @@ let
       TMPDIR="''${TMPDIR:-$(mktemp -d)}"
       echo ">> using tmpdir: $TMPDIR"
 
-      kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager-helper --image kindest/node:v1.25.3
+      kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager --image kindest/node:v1.25.3
 
       ${demo-loadimage}/bin/demo-loadimage
       export KUBECONFIG="$TMPDIR/kubeconfig"
       echo ">> using kubeconfig: $KUBECONFIG"
       echo "export KUBECONFIG=$KUBECONFIG"
-      echo ">> installing cert-manager, dapr-cert-manager-helper and dapr"
+      echo ">> installing cert-manager, dapr-cert-manager and dapr"
 
       kubectl create namespace dapr-system
 
@@ -81,10 +81,10 @@ let
         --set installCRDs=true \
         --wait &
 
-      helm upgrade -i dapr-cert-manager-helper ${repo}/deploy/charts/dapr-cert-manager-helper \
-        --namespace dapr-cert-manager-helper \
+      helm upgrade -i dapr-cert-manager ${repo}/deploy/charts/dapr-cert-manager \
+        --namespace dapr-cert-manager \
         --create-namespace \
-        --set image.repository=dapr-cert-manager-helper \
+        --set image.repository=dapr-cert-manager \
         --set image.tag=dev \
         --set image.pullPolicy=Never \
         --set app.logLevel=3 \
@@ -110,13 +110,13 @@ let
     text = ''
       TMPDIR=$(mktemp -d)
       trap 'rm -rf -- "$TMPDIR"' EXIT
-      trap 'kind delete cluster --name dapr-cert-manager-helper' EXIT
+      trap 'kind delete cluster --name dapr-cert-manager' EXIT
 
       TMPDIR=$TMPDIR ${demo}/bin/demo
 
       echo ">> running smoke test"
 
-      ${smoke-binary}/bin/dapr-cert-manager-helper-smoke \
+      ${smoke-binary}/bin/dapr-cert-manager-smoke \
         --dapr-namespace dapr-system \
         --certificate-name-trust-bundle dapr-trust-bundle \
         --certificate-name-webhook dapr-webhook \

@@ -14,9 +14,9 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/diagridio/dapr-cert-manager-helper/cmd/app/options"
-	"github.com/diagridio/dapr-cert-manager-helper/pkg/controller"
-	"github.com/diagridio/dapr-cert-manager-helper/pkg/trustanchor"
+	"github.com/diagridio/dapr-cert-manager/cmd/app/options"
+	"github.com/diagridio/dapr-cert-manager/pkg/controller"
+	"github.com/diagridio/dapr-cert-manager/pkg/trustanchor"
 )
 
 const (
@@ -24,12 +24,12 @@ const (
 )
 
 // NewCommand will return a new command instance for the
-// dapr-cert-manager-helper operator.
+// dapr-cert-manager operator.
 func NewCommand() *cobra.Command {
 	opts := options.New()
 
 	cmd := &cobra.Command{
-		Use:   "dapr-cert-manager-helper",
+		Use:   "dapr-cert-manager",
 		Short: helpOutput,
 		Long:  helpOutput,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -60,7 +60,7 @@ func NewCommand() *cobra.Command {
 				EventBroadcaster:              eventBroadcaster,
 				LeaderElection:                true,
 				LeaderElectionNamespace:       opts.DaprNamespace,
-				LeaderElectionID:              "dapr-cert-manager-helper",
+				LeaderElectionID:              "dapr-cert-manager",
 				LeaderElectionReleaseOnCancel: true,
 				ReadinessEndpointName:         "/readyz",
 				HealthProbeBindAddress:        fmt.Sprintf(":%d", opts.ReadyzPort),

@@ -10,7 +10,7 @@ import (
 	cmutil "github.com/cert-manager/cert-manager/pkg/api/util"
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
-	"github.com/diagridio/dapr-cert-manager-helper/pkg/trustanchor"
+	"github.com/diagridio/dapr-cert-manager/pkg/trustanchor"
 	"github.com/go-logr/logr"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// Options configure the dapr-cert-manager-helper controllers.
+// Options configure the dapr-cert-manager controllers.
 type Options struct {
 	// Log is the logger used by the controllers.
 	Log logr.Logger

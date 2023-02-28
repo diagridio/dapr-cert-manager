@@ -16,7 +16,7 @@ import (
 	"k8s.io/klog/v2/klogr"
 )
 
-// Options is a struct to hold options for dapr-cert-manager-helper.
+// Options is a struct to hold options for dapr-cert-manager.
 type Options struct {
 	logLevel        string
 	kubeConfigFlags *genericclioptions.ConfigFlags
@@ -75,7 +75,7 @@ func (o *Options) Complete() error {
 	klog.InitFlags(nil)
 	log := klogr.New()
 	flag.Set("v", o.logLevel)
-	o.Logr = log.WithName("dapr-cert-manager-helper")
+	o.Logr = log.WithName("dapr-cert-manager")
 
 	var err error
 	o.RestConfig, err = o.kubeConfigFlags.ToRESTConfig()

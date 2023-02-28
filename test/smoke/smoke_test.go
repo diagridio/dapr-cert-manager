@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/diagridio/dapr-cert-manager-helper/test/smoke/config"
+	"github.com/diagridio/dapr-cert-manager/test/smoke/config"
 )
 
 var (
@@ -35,7 +35,7 @@ var _ = BeforeSuite(func() {
 })
 
 func Test_Smoke(t *testing.T) {
-	runSuite(t, "smoke-dapr-cert-manager-helper", "../../_artifacts")
+	runSuite(t, "smoke-dapr-cert-manager", "../../_artifacts")
 }
 
 func runSuite(t *testing.T, suiteName, artifactDir string) {

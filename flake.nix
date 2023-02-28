@@ -1,5 +1,5 @@
 {
-  description = "dapr-cert-manager-helper";
+  description = "dapr-cert-manager";
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
@@ -44,7 +44,7 @@
       };
 
       program = sys: os: (pkgs.buildGoApplication {
-        name = "dapr-cert-manager-helper";
+        name = "dapr-cert-manager";
         modules = ./gomod2nix.toml;
         inherit src;
         subPackages = [ "cmd" ];
@@ -53,13 +53,13 @@
         GOARCH = sys;
         CGO_ENABLED = "0";
         postInstall = ''
-          mv $(find $out -type f) $out/bin/dapr-cert-manager-helper
+          mv $(find $out -type f) $out/bin/dapr-cert-manager
           find $out -empty -type d -delete
         '';
       });
 
       image = sys: tag: pkgs.dockerTools.buildLayeredImage {
-        name = "dapr-cert-manager-helper";
+        name = "dapr-cert-manager";
         inherit tag;
         contents = with pkgs; [
           (program sys "linux")
@@ -85,7 +85,7 @@
 
       apps = {
         inherit (ci) check update smoke demo demo-loadimage;
-        default = {type = "app"; program = "${self.packages.${system}.default}/bin/dapr-cert-manager-helper"; };
+        default = {type = "app"; program = "${self.packages.${system}.default}/bin/dapr-cert-manager"; };
       };
 
       devShells.default = pkgs.mkShell {

@@ -1,4 +1,4 @@
-module github.com/diagridio/dapr-cert-manager-helper
+module github.com/diagridio/dapr-cert-manager
 
 go 1.20
 

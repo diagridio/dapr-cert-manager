@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "dapr-cert-manager-helper.name" . }}
+  name: {{ include "dapr-cert-manager.name" . }}
   labels:
-{{ include "dapr-cert-manager-helper.labels" . | indent 4 }}
+{{ include "dapr-cert-manager.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "dapr-cert-manager-helper.name" . }}
+      app: {{ include "dapr-cert-manager.name" . }}
   template:
     metadata:
       labels:
-        app: {{ include "dapr-cert-manager-helper.name" . }}
+        app: {{ include "dapr-cert-manager.name" . }}
     spec:
-      serviceAccountName: {{ include "dapr-cert-manager-helper.name" . }}
+      serviceAccountName: {{ include "dapr-cert-manager.name" . }}
       containers:
-      - name: {{ include "dapr-cert-manager-helper.name" . }}
+      - name: {{ include "dapr-cert-manager.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
@@ -27,7 +27,7 @@ spec:
             path: "/readyz"
           initialDelaySeconds: 1
           periodSeconds: 3
-        command: ["dapr-cert-manager-helper"]
+        command: ["dapr-cert-manager"]
         args:
           - "--log-level={{.Values.app.logLevel}}"
           - "--metrics-port={{.Values.app.metrics.port}}"

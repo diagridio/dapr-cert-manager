@@ -2,19 +2,19 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "dapr-cert-manager-helper.name" . }}
+  name: {{ include "dapr-cert-manager.name" . }}
   labels:
-    app: {{ include "dapr-cert-manager-helper.name" . }}
-{{ include "dapr-cert-manager-helper.labels" . | indent 4 }}
+    app: {{ include "dapr-cert-manager.name" . }}
+{{ include "dapr-cert-manager.labels" . | indent 4 }}
     prometheus: {{ .Values.app.metrics.service.servicemonitor.prometheusInstance }}
 {{- if .Values.app.metrics.service.servicemonitor.labels }}
 {{ toYaml .Values.app.metrics.service.servicemonitor.labels | indent 4}}
 {{- end }}
 spec:
-  jobLabel: {{ include "dapr-cert-manager-helper.name" . }}
+  jobLabel: {{ include "dapr-cert-manager.name" . }}
   selector:
     matchLabels:
-      app: {{ include "dapr-cert-manager-helper.name" . }}
+      app: {{ include "dapr-cert-manager.name" . }}
   namespaceSelector:
     matchNames:
       - {{ .Release.Namespace }}

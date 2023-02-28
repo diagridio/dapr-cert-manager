@@ -1,4 +1,4 @@
-module github.com/diagridio/dapr-cert-manager-helper/test/smoke
+module github.com/diagridio/dapr-cert-manager/test/smoke
 
 go 1.20
 

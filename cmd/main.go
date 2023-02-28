@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/diagridio/dapr-cert-manager-helper/cmd/app"
+	"github.com/diagridio/dapr-cert-manager/cmd/app"
 )
 
 func main() {

@@ -13,7 +13,7 @@ image:
   pullPolicy: IfNotPresent
 
 app:
-  # -- Verbosity of dapr-cert-manager-helper logging; takes a value from 1-5, with higher being more verbose
+  # -- Verbosity of dapr-cert-manager logging; takes a value from 1-5, with higher being more verbose
   logLevel: 1
   # -- daprNamespace is the namespace where Dapr is installed.
   daprNamespace: dapr-system
@@ -49,7 +49,7 @@ app:
         labels: {}
 
   readinessProbe:
-    # -- Container port on which to expose dapr-cert-manager-helper HTTP
+    # -- Container port on which to expose dapr-cert-manager HTTP
     # readiness probe using default network interface Available on path
     # '/readyz'.
     port: 6060
