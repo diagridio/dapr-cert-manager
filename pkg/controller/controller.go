@@ -59,14 +59,13 @@ type Options struct {
 
 // secretCtrl is the controller that manages dapr certificate secrets.
 type secretCtrl struct {
-	log             logr.Logger
-	lister          client.Reader
-	client          client.Client
-	trustAnchor     x509bundle.Source
-	daprNamespace   string
-	trustBundleConf secretConf
-	webhookConf     secretConf
-	sidecarConf     secretConf
+	log           logr.Logger
+	lister        client.Reader
+	client        client.Client
+	trustAnchor   x509bundle.Source
+	daprNamespace string
+
+	confs []secretConf
 }
 
 type secretConf struct {
@@ -96,8 +95,8 @@ func (s *secretCtrl) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		errs []error
 	)
 
-	wg.Add(3)
-	for _, conf := range []secretConf{s.trustBundleConf, s.webhookConf, s.sidecarConf} {
+	wg.Add(len(s.confs))
+	for _, conf := range s.confs {
 		go func(conf secretConf) {
 			defer wg.Done()
 			if err := s.reconcileBundle(ctx, log, conf); err != nil {
@@ -330,30 +329,40 @@ func AddTrustBundle(ctx context.Context, mgr ctrl.Manager, opts Options) error {
 		client:        mgr.GetClient(),
 		trustAnchor:   opts.TrustAnchor,
 		daprNamespace: opts.DaprNamespace,
-		trustBundleConf: secretConf{
+	}
+	if len(opts.TrustBundleCertificateName) > 0 {
+		secCtl.confs = append(secCtl.confs, secretConf{
 			certName:        opts.TrustBundleCertificateName,
 			certSecretName:  "dapr-trust-bundle",
 			caSecretName:    "dapr-trust-bundle",
 			certSectretKey:  "issuer.crt",
 			certSecretPKKey: "issuer.key",
 			certSecretCAKey: "ca.crt",
-		},
-		webhookConf: secretConf{
+		})
+	}
+	if len(opts.WebhookCertificateName) > 0 {
+		secCtl.confs = append(secCtl.confs, secretConf{
 			certName:        opts.WebhookCertificateName,
 			certSecretName:  "dapr-webhook-cert",
 			caSecretName:    "dapr-webhook-ca",
 			certSectretKey:  "tls.crt",
 			certSecretPKKey: "tls.key",
 			certSecretCAKey: "caBundle",
-		},
-		sidecarConf: secretConf{
+		})
+	}
+	if len(opts.SidecarInjectorCertificateName) > 0 {
+		secCtl.confs = append(secCtl.confs, secretConf{
 			certName:        opts.SidecarInjectorCertificateName,
 			certSecretName:  "dapr-sidecar-injector-cert",
 			caSecretName:    "",
 			certSectretKey:  "tls.crt",
 			certSecretPKKey: "tls.key",
 			certSecretCAKey: "",
-		},
+		})
+	}
+
+	if len(secCtl.confs) == 0 {
+		return errors.New("no certificate names provided")
 	}
 
 	// TODO: @joshvanl add custom source to re-reconcile when the trust anchor

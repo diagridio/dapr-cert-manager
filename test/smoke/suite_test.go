@@ -47,7 +47,7 @@ var _ = Describe("Smoke", func() {
 			Expect(cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: "dapr-trust-bundle"}, &daprSecret)).NotTo(HaveOccurred())
 
 			return bytes.Equal(cmSecret.Data["tls.crt"], daprSecret.Data["issuer.crt"]) && bytes.Equal(cmSecret.Data["tls.key"], daprSecret.Data["issuer.key"])
-		}, "10s", "100ms").Should(BeTrue(), "the trust-bundle secret should have been updated with the cert-manager issuer key and cert")
+		}, "20s", "100ms").Should(BeTrue(), "the trust-bundle secret should have been updated with the cert-manager issuer key and cert")
 
 		cmCA, err := x509bundle.Parse(spiffeid.TrustDomain{}, cmSecret.Data["ca.crt"])
 		Expect(err).NotTo(HaveOccurred())

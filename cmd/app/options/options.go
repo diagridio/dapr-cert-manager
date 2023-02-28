@@ -87,10 +87,6 @@ func (o *Options) Complete() error {
 		return fmt.Errorf("--dapr-namespace must be set")
 	}
 
-	if len(o.TrustBundleCertificateName) == 0 {
-		return fmt.Errorf("--trust-bundle-certificate-name must be set")
-	}
-
 	if len(o.TrustAnchorFilePath) > 0 {
 		if _, err := os.Stat(o.TrustAnchorFilePath); err != nil {
 			return fmt.Errorf("failed to get trust anchor file %q: %w", o.TrustAnchorFilePath, err)
