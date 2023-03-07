@@ -55,7 +55,7 @@ let
   };
 
 in {
-  inherit binary build;
+  inherit binary build name;
 
   packages = {
     image-amd64 = (build "amd64" "${version}-amd64");

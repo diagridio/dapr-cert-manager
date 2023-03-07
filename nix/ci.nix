@@ -2,6 +2,7 @@
 pkgs,
 gomod2nix,
 image,
+image-name,
 src,
 src-test,
 repo,
@@ -44,7 +45,7 @@ let
     ];
     text = ''
       docker load < ${image}
-      kind load docker-image --name dapr-cert-manager dapr-cert-manager:dev
+      kind load docker-image --name dapr-cert-manager ${image-name}:dev
     '';
   };
 
@@ -84,7 +85,7 @@ let
       helm upgrade -i dapr-cert-manager ${repo}/deploy/charts/dapr-cert-manager \
         --namespace dapr-cert-manager \
         --create-namespace \
-        --set image.repository=dapr-cert-manager \
+        --set image.repository=${image-name} \
         --set image.tag=dev \
         --set image.pullPolicy=Never \
         --set app.logLevel=3 \
