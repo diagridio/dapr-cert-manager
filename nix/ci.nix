@@ -45,7 +45,7 @@ let
     ];
     text = ''
       podman load < ${image}
-      systemd-run --scope --user ${pkgs.kind}/bin/kind load docker-image --name dapr-cert-manager ${image-name}:dev
+      systemd-run --property=Delegate=yes --scope --user ${pkgs.kind}/bin/kind load docker-image --name dapr-cert-manager ${image-name}:dev
     '';
   };
 
@@ -62,7 +62,7 @@ let
       TMPDIR="''${TMPDIR:-$(mktemp -d)}"
       echo ">> using tmpdir: $TMPDIR"
 
-      systemd-run --scope --user ${pkgs.kind}/bin/kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager
+      systemd-run --property=Delegate=yes --scope --user ${pkgs.kind}/bin/kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager
 
       ${demo-loadimage}/bin/demo-loadimage
       export KUBECONFIG="$TMPDIR/kubeconfig"
@@ -104,7 +104,7 @@ let
     text = ''
       TMPDIR=$(mktemp -d)
       trap 'rm -rf -- "$TMPDIR"' EXIT
-      trap 'systemd-run --scope --user ${pkgs.kind}/bin/kind delete cluster --name dapr-cert-manager' EXIT
+      trap 'systemd-run --property=Delegate=yes --scope --user ${pkgs.kind}/bin/kind delete cluster --name dapr-cert-manager' EXIT
 
       TMPDIR=$TMPDIR ${demo}/bin/demo
 
