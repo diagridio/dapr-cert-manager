@@ -41,11 +41,11 @@ let
     name = "demo-loadimage";
     runtimeInputs = with pkgs; [
       podman
-      kind
+      systemd
     ];
     text = ''
       podman load < ${image}
-      kind load docker-image --name dapr-cert-manager ${image-name}:dev
+      systemd-run --scope --user ${pkgs.kind}/bin/kind load docker-image --name dapr-cert-manager ${image-name}:dev
     '';
   };
 
@@ -55,14 +55,14 @@ let
       demo-loadimage
       kubernetes-helm
       kubectl
-      kind
+      systemd
       dapr-cli
     ];
     text = ''
       TMPDIR="''${TMPDIR:-$(mktemp -d)}"
       echo ">> using tmpdir: $TMPDIR"
 
-      kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager
+      systemd-run --scope --user ${pkgs.kind}/bin/kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager
 
       ${demo-loadimage}/bin/demo-loadimage
       export KUBECONFIG="$TMPDIR/kubeconfig"
@@ -100,11 +100,11 @@ let
 
   smoke = pkgs.writeShellApplication {
     name = "smoke";
-    runtimeInputs = with pkgs; [ kind ];
+    runtimeInputs = with pkgs; [ systemd ];
     text = ''
       TMPDIR=$(mktemp -d)
       trap 'rm -rf -- "$TMPDIR"' EXIT
-      trap 'kind delete cluster --name dapr-cert-manager' EXIT
+      trap 'systemd-run --scope --user ${pkgs.kind}/bin/kind delete cluster --name dapr-cert-manager' EXIT
 
       TMPDIR=$TMPDIR ${demo}/bin/demo
 
