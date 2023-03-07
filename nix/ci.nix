@@ -45,7 +45,7 @@ let
     ];
     text = ''
       podman load < ${image}
-      kind load docker-image --name dapr-cert-manager ${image-name}:dev
+      KIND_EXPERIMENTAL_PROVIDER=podman kind load docker-image --name dapr-cert-manager ${image-name}:dev
     '';
   };
 
@@ -62,7 +62,7 @@ let
       TMPDIR="''${TMPDIR:-$(mktemp -d)}"
       echo ">> using tmpdir: $TMPDIR"
 
-      kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager --image kindest/node:v1.25.3
+      KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager --image kindest/node:v1.25.3
 
       ${demo-loadimage}/bin/demo-loadimage
       export KUBECONFIG="$TMPDIR/kubeconfig"
@@ -104,7 +104,7 @@ let
     text = ''
       TMPDIR=$(mktemp -d)
       trap 'rm -rf -- "$TMPDIR"' EXIT
-      trap 'kind delete cluster --name dapr-cert-manager' EXIT
+      trap 'KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster --name dapr-cert-manager' EXIT
 
       TMPDIR=$TMPDIR ${demo}/bin/demo
 
@@ -146,6 +146,7 @@ in {
   apps = {
     update = {type = "app"; program = "${update}/bin/update";};
     check = {type = "app"; program = "${check}/bin/check";};
+    demo-loadimage = {type = "app"; program = "${demo-loadimage}/bin/demo-loadimage";};
     demo = {type = "app"; program = "${demo}/bin/demo";};
     smoke = {type = "app"; program = "${smoke}/bin/smoke";};
   };
