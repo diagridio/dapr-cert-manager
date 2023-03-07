@@ -9,24 +9,11 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    env:
-      KIND_EXPERIMENTAL_PROVIDER: "podman"
     steps:
     - uses: actions/checkout@v3
     - uses: cachix/install-nix-action@v19
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Enable ipv4 and ipv6 forwarding
-      run: |
-        sudo sysctl -w net.ipv6.conf.all.forwarding=1
-        sudo sysctl -w net.ipv4.ip_forward=1
-    - name: Setup podman
-      run: |
-        podman version
-        # podman requires dnsmasq for custom networks
-        # https://github.com/actions/virtual-environments/issues/2708
-        sudo apt-get update
-        sudo apt-get -y install dnsmasq
     - run: nix flake check
     - run: nix run .#check
     - run: nix run .#smoke
