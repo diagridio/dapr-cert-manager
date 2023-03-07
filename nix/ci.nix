@@ -64,8 +64,7 @@ let
       echo ">> using tmpdir: $TMPDIR"
 
       systemd-run --scope --user --setenv=KIND_EXPERIMENTAL_PROVIDER=podman --property=Delegate=yes \
-        ${pkgs.kind}/bin/kind create cluster --kubeconfig "$TMPDIR/kubeconfig" \
-          --name dapr-cert-manager --image kindest/node:v1.25.3
+        ${pkgs.kind}/bin/kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager
 
       ${demo-loadimage}/bin/demo-loadimage
       export KUBECONFIG="$TMPDIR/kubeconfig"
