@@ -50,7 +50,7 @@
       ci = import ./nix/ci.nix {
         gomod2nix = (gomod2nix.packages.${system}.default);
         image = (image.build localSystem "dev");
-        image-name = image.name;
+        image-name = "${image.name}-${localSystem}";
         inherit src src-test repo pkgs;
       };
 
