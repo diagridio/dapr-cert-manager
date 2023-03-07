@@ -1,0 +1,19 @@
+name: Publish container images
+
+on:
+  push:
+    tags: [ v* ]
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v19
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - run: GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" nix run .#image-publish

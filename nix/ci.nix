@@ -149,9 +149,10 @@ let
   };
 
 in {
-  update = {type = "app"; program = "${update}/bin/update";};
-  check = {type = "app"; program = "${check}/bin/check";};
-  demo-loadimage = {type = "app"; program = "${demo-loadimage}/bin/demo-loadimage";};
-  demo = {type = "app"; program = "${demo}/bin/demo";};
-  smoke = {type = "app"; program = "${smoke}/bin/smoke";};
+  apps = {
+    update = {type = "app"; program = "${update}/bin/update";};
+    check = {type = "app"; program = "${check}/bin/check";};
+    demo = {type = "app"; program = "${demo}/bin/demo";};
+    smoke = {type = "app"; program = "${smoke}/bin/smoke";};
+  };
 }

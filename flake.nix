@@ -28,7 +28,7 @@
     src = nixpkgs.lib.sourceFilesBySuffices ./. [ ".go" "go.mod" "go.sum" "gomod2nix.toml" ];
     src-test = nixpkgs.lib.sourceFilesBySuffices ./test [ ".go" "go.mod" "go.sum" "gomod2nix.toml" ];
 
-    version = "v0.1.0";
+    version = "v0.1.0-rc1";
 
   in utils.lib.eachSystem targetSystems (system:
     let
@@ -43,32 +43,13 @@
         ];
       };
 
-      program = sys: os: (pkgs.buildGoApplication {
-        name = "dapr-cert-manager";
-        modules = ./gomod2nix.toml;
-        inherit src;
-        subPackages = [ "cmd" ];
-      }).overrideAttrs(old: old // {
-        GOOS = os;
-        GOARCH = sys;
-        CGO_ENABLED = "0";
-        postInstall = ''
-          mv $(find $out -type f) $out/bin/dapr-cert-manager
-          find $out -empty -type d -delete
-        '';
-      });
-
-      image = sys: tag: pkgs.dockerTools.buildLayeredImage {
-        name = "dapr-cert-manager";
-        inherit tag;
-        contents = with pkgs; [
-          (program sys "linux")
-        ];
+      image = import ./nix/image.nix {
+        inherit pkgs src version;
       };
 
       ci = import ./nix/ci.nix {
         gomod2nix = (gomod2nix.packages.${system}.default);
-        image = (image localSystem "dev");
+        image = (image.build localSystem "dev");
         inherit src src-test repo pkgs;
       };
 
@@ -77,16 +58,13 @@
 
     in {
       packages = {
-        default = (program localSystem localOS);
-        image = (image localSystem version);
-        image-x86_64 = (image "amd64" version);
-        image-arm64 = (image "arm64" version);
-      };
+        default = (image.binary localSystem localOS);
+        image = (image.build localSystem "${version}-${localSystem}");
+      } // image.packages;
 
       apps = {
-        inherit (ci) check update smoke demo demo-loadimage;
         default = {type = "app"; program = "${self.packages.${system}.default}/bin/dapr-cert-manager"; };
-      };
+      } // image.apps // ci.apps;
 
       devShells.default = pkgs.mkShell {
         buildInputs = with pkgs; [
