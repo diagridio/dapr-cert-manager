@@ -53,17 +53,16 @@ let
     name = "demo";
     runtimeInputs = with pkgs; [
       demo-loadimage
-      kind
       kubernetes-helm
       kubectl
+      kind
       dapr-cli
-      docker
     ];
     text = ''
       TMPDIR="''${TMPDIR:-$(mktemp -d)}"
       echo ">> using tmpdir: $TMPDIR"
 
-      kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager --image kindest/node:v1.25.3
+      kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager
 
       ${demo-loadimage}/bin/demo-loadimage
       export KUBECONFIG="$TMPDIR/kubeconfig"
@@ -101,13 +100,7 @@ let
 
   smoke = pkgs.writeShellApplication {
     name = "smoke";
-    runtimeInputs = with pkgs; [
-      kind
-      kubernetes-helm
-      kubectl
-      dapr-cli
-      docker
-    ];
+    runtimeInputs = with pkgs; [ kind ];
     text = ''
       TMPDIR=$(mktemp -d)
       trap 'rm -rf -- "$TMPDIR"' EXIT
@@ -153,6 +146,7 @@ in {
   apps = {
     update = {type = "app"; program = "${update}/bin/update";};
     check = {type = "app"; program = "${check}/bin/check";};
+    demo-loadimage = {type = "app"; program = "${demo-loadimage}/bin/demo-loadimage";};
     demo = {type = "app"; program = "${demo}/bin/demo";};
     smoke = {type = "app"; program = "${smoke}/bin/smoke";};
   };

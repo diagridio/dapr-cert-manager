@@ -23,8 +23,7 @@ let
   });
 
   build = sys: tag: pkgs.dockerTools.buildLayeredImage {
-    name = "${name}-${sys}";
-    inherit tag;
+    inherit name tag;
     contents = with pkgs; [
       (binary sys "linux")
     ];
@@ -32,7 +31,7 @@ let
 
   publish = pkgs.writeShellApplication {
     name = "publish";
-    runtimeInputs = with pkgs;[ docker ];
+    runtimeInputs = with pkgs;[ podman ];
     text = ''
       if [[ -z "''${GITHUB_TOKEN}" ]]; then
         echo ">> Environment varibale 'GITHUB_TOKEN' is not set."
@@ -40,17 +39,13 @@ let
       fi
 
       echo ">> Logging into GitHub Container Registry..."
-      echo "''${GITHUB_TOKEN}" | docker login ghcr.io -u $ --password-stdin
-
-      echo ">> Loading images..."
-      docker load < ${build "amd64" "${version}"} &
-      docker load < ${build "arm64" "${version}"} &
-      wait
+      echo "''${GITHUB_TOKEN}" | podman login ghcr.io -u $ --password-stdin
 
       echo ">> Pushing images..."
-      docker push ${name}-amd64:${version} &
-      docker push ${name}-arm64:${version} &
-      wait
+      podman manifest create ${name}:${version}
+      podman manifest add ${name}:${version} docker-archive:${build "amd64" "${version}-amd64"} --os linux --arch amd64
+      podman manifest add ${name}:${version} docker-archive:${build "arm64" "${version}-arm64"} --os linux --arch arm64
+      podman push ${name}:${version}
     '';
   };
 
