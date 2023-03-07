@@ -12,8 +12,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: |
-        sudo mkdir -p /etc/systemd/system/user@.service.d
-        sudo echo "[Service]\nDelegate=yes" | sudo tee /etc/systemd/system/user@.service.d/delegate.conf
+        sudo mkdir -p /etc/systemd/system/user@.service.d /etc/modules-load.d
+        sudo echo "[Service]\nDelegate=yes\n" | sudo tee /etc/systemd/system/user@.service.d/delegate.conf
+        sudo echo "ip6_tables\nip6table_nat\nip_tables\niptable_nat\n" | sudo tee /etc/modules-load.d/iptables.conf
         sudo systemctl daemon-reload
     - uses: cachix/install-nix-action@v19
       with:
