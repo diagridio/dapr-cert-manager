@@ -28,7 +28,7 @@
     src = nixpkgs.lib.sourceFilesBySuffices ./. [ ".go" "go.mod" "go.sum" "gomod2nix.toml" ];
     src-test = nixpkgs.lib.sourceFilesBySuffices ./test [ ".go" "go.mod" "go.sum" "gomod2nix.toml" ];
 
-    version = "v0.1.0-rc1";
+    version = "v0.1.0-rc2";
 
   in utils.lib.eachSystem targetSystems (system:
     let

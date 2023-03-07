@@ -48,9 +48,8 @@ let
       wait
 
       echo ">> Pushing images..."
-      docker push ${name}-amd64:${version} &
-      docker push ${name}-arm64:${version} &
-      wait
+      docker manifest create --amend ${name}:${version} ${name}-amd64:${version} ${name}-arm64:${version}
+      docker push ${name}:${version}
     '';
   };
 
