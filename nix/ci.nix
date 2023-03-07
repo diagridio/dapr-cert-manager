@@ -40,11 +40,11 @@ let
   demo-loadimage = pkgs.writeShellApplication {
     name = "demo-loadimage";
     runtimeInputs = with pkgs; [
-      docker
+      podman
       kind
     ];
     text = ''
-      docker load < ${image}
+      podman load < ${image}
       kind load docker-image --name dapr-cert-manager ${image-name}:dev
     '';
   };
@@ -57,7 +57,6 @@ let
       kubernetes-helm
       kubectl
       dapr-cli
-      docker
     ];
     text = ''
       TMPDIR="''${TMPDIR:-$(mktemp -d)}"
@@ -101,13 +100,7 @@ let
 
   smoke = pkgs.writeShellApplication {
     name = "smoke";
-    runtimeInputs = with pkgs; [
-      kind
-      kubernetes-helm
-      kubectl
-      dapr-cli
-      docker
-    ];
+    runtimeInputs = with pkgs; [ kind ];
     text = ''
       TMPDIR=$(mktemp -d)
       trap 'rm -rf -- "$TMPDIR"' EXIT
