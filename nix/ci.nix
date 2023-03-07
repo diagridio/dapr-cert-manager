@@ -41,11 +41,12 @@ let
     name = "demo-loadimage";
     runtimeInputs = with pkgs; [
       podman
-      kind
+      systemd
     ];
     text = ''
       podman load < ${image}
-      KIND_EXPERIMENTAL_PROVIDER=podman kind load docker-image --name dapr-cert-manager ${image-name}:dev
+      systemd-run --scope --user --setenv=KIND_EXPERIMENTAL_PROVIDER=podman --property=Delegate=yes \
+        ${pkgs.kind}/bin/kind load docker-image --name dapr-cert-manager ${image-name}:dev
     '';
   };
 
@@ -53,16 +54,18 @@ let
     name = "demo";
     runtimeInputs = with pkgs; [
       demo-loadimage
-      kind
       kubernetes-helm
       kubectl
       dapr-cli
+      systemd
     ];
     text = ''
       TMPDIR="''${TMPDIR:-$(mktemp -d)}"
       echo ">> using tmpdir: $TMPDIR"
 
-      KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster --kubeconfig "$TMPDIR/kubeconfig" --name dapr-cert-manager --image kindest/node:v1.25.3
+      systemd-run --scope --user --setenv=KIND_EXPERIMENTAL_PROVIDER=podman --property=Delegate=yes \
+        ${pkgs.kind}/bin/kind create cluster --kubeconfig "$TMPDIR/kubeconfig" \
+          --name dapr-cert-manager --image kindest/node:v1.25.3
 
       ${demo-loadimage}/bin/demo-loadimage
       export KUBECONFIG="$TMPDIR/kubeconfig"
@@ -100,11 +103,12 @@ let
 
   smoke = pkgs.writeShellApplication {
     name = "smoke";
-    runtimeInputs = with pkgs; [ kind ];
+    runtimeInputs = with pkgs; [ systemd ];
     text = ''
       TMPDIR=$(mktemp -d)
       trap 'rm -rf -- "$TMPDIR"' EXIT
-      trap 'KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster --name dapr-cert-manager' EXIT
+      trap 'systemd-run --scope --user --setenv=KIND_EXPERIMENTAL_PROVIDER=podman --property=Delegate=yes \
+        ${pkgs.kind}/bin/kind delete cluster --name dapr-cert-manager' EXIT
 
       TMPDIR=$TMPDIR ${demo}/bin/demo
 
