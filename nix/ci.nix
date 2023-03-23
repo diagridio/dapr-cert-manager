@@ -40,12 +40,12 @@ let
   demo-loadimage = pkgs.writeShellApplication {
     name = "demo-loadimage";
     runtimeInputs = with pkgs; [
-      podman
+      docker
       kind
     ];
     text = ''
-      podman load < ${image}
-      KIND_EXPERIMENTAL_PROVIDER=podman kind load docker-image --name dapr-cert-manager ${image-name}:dev
+      docker load < ${image}
+      kind load docker-image --name dapr-cert-manager ${image-name}:dev
     '';
   };
 
