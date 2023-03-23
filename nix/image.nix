@@ -27,6 +27,7 @@ let
     contents = with pkgs; [
       (binary sys "linux")
     ];
+    config = { User = "1001:1001"; };
   };
 
   publish = pkgs.writeShellApplication {
