@@ -45,7 +45,7 @@ let
     ];
     text = ''
       podman load < ${image}
-      kind load docker-image --name dapr-cert-manager ${image-name}:dev
+      KIND_EXPERIMENTAL_PROVIDER=podman kind load docker-image --name dapr-cert-manager ${image-name}:dev
     '';
   };
 
