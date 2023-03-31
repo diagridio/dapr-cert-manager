@@ -37,15 +37,43 @@ let
     '';
   });
 
-  demo-loadimage = pkgs.writeShellApplication {
-    name = "demo-loadimage";
+  demo-loadimage-docker = pkgs.writeShellApplication {
+    name = "demo-loadimage-docker";
     runtimeInputs = with pkgs; [
       docker
       kind
     ];
     text = ''
       docker load < ${image}
-      kind load docker-image --name dapr-cert-manager ${image-name}:dev
+      kind load --name dapr-cert-manager docker-image ${image-name}:dev
+    '';
+  };
+
+  demo-loadimage-podman = pkgs.writeShellApplication {
+    name = "demo-loadimage-podman";
+    runtimeInputs = with pkgs; [
+      podman
+      kind
+    ];
+    text = ''
+      export KIND_EXPERIMENTAL_PROVIDER=podman
+      podman load < ${image}
+      kind load --name dapr-cert-manager docker-image ${image-name}:dev
+    '';
+  };
+
+  demo-loadimage = pkgs.writeShellApplication {
+    name = "demo-loadimage";
+    runtimeInputs = with pkgs; [
+      demo-loadimage-docker
+      demo-loadimage-podman
+    ];
+    text = ''
+      if docker version > /dev/null && [[ -S /var/run/docker.sock ]]; then
+        demo-loadimage-docker
+      else
+        demo-loadimage-podman
+      fi
     '';
   };
 
