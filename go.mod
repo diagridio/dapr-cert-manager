@@ -3,7 +3,7 @@ module github.com/diagridio/dapr-cert-manager
 go 1.20
 
 require (
-	github.com/cert-manager/cert-manager v1.11.0
+	github.com/cert-manager/cert-manager v1.11.1
 	github.com/dapr/kit v0.0.4
 	github.com/go-logr/logr v1.2.4
 	github.com/spf13/cobra v1.6.1
@@ -20,7 +20,7 @@ require (
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
