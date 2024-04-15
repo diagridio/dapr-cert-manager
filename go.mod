@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/cert-manager/cert-manager v1.11.0
 	github.com/dapr/kit v0.0.4
-	github.com/go-logr/logr v1.2.4
+	github.com/go-logr/logr v1.4.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spiffe/go-spiffe/v2 v2.1.3
@@ -14,7 +14,7 @@ require (
 	k8s.io/cli-runtime v0.26.3
 	k8s.io/client-go v0.26.3
 	k8s.io/component-base v0.26.3
-	k8s.io/klog/v2 v2.90.1
+	k8s.io/klog/v2 v2.120.1
 	sigs.k8s.io/controller-runtime v0.14.6
 )
 
