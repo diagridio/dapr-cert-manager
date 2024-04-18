@@ -12,6 +12,6 @@ maintainers:
 sources:
 - https://github.com/diagrid/dapr-cert-manager
 
-appVersion: v0.2.0
-version: v0.2.0
+appVersion: v0.3.0
+version: v0.3.0
 
