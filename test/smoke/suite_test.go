@@ -57,44 +57,5 @@ var _ = Describe("Smoke", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(daprCA.X509Authorities()).To(HaveLen(2))
 		Expect(daprCA.HasX509Authority(cmCA.X509Authorities()[0])).To(BeTrue(), "the trust-bundle secret should have the same root CA as the cert-manager issuer")
-
-		// dapr-webhook-cert
-		Eventually(func() bool {
-			Expect(cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: cnf.CertificateNameWebhook}, &cert)).NotTo(HaveOccurred())
-
-			err := cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: cert.Spec.SecretName}, &cmSecret)
-			if err != nil {
-				return false
-			}
-
-			Expect(cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: "dapr-webhook-cert"}, &daprSecret)).NotTo(HaveOccurred())
-
-			return bytes.Equal(cmSecret.Data["tls.crt"], daprSecret.Data["tls.crt"]) && bytes.Equal(cmSecret.Data["tls.key"], daprSecret.Data["tls.key"])
-		}, "10s", "100ms").Should(BeTrue(), "the webook secret should have been updated with the cert-manager issuer key and cert")
-
-		Expect(cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: "dapr-webhook-ca"}, &daprSecret)).NotTo(HaveOccurred())
-
-		cmCA, err = x509bundle.Parse(spiffeid.TrustDomain{}, cmSecret.Data["ca.crt"])
-		Expect(err).NotTo(HaveOccurred())
-		Expect(cmCA.X509Authorities()).To(HaveLen(1))
-
-		daprCA, err = x509bundle.Parse(spiffeid.TrustDomain{}, daprSecret.Data["caBundle"])
-		Expect(err).NotTo(HaveOccurred())
-		Expect(daprCA.X509Authorities()).To(HaveLen(2))
-		Expect(daprCA.HasX509Authority(cmCA.X509Authorities()[0])).To(BeTrue(), "the webhook secret should have the same root CA as the cert-manager issuer")
-
-		// dapr-sidecar-injector-cert
-		Eventually(func() bool {
-			Expect(cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: cnf.CertificateNameSidecarInjector}, &cert)).NotTo(HaveOccurred())
-
-			err := cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: cert.Spec.SecretName}, &cmSecret)
-			if err != nil {
-				return false
-			}
-
-			Expect(cl.Get(ctx, client.ObjectKey{Namespace: cnf.DaprNamespace, Name: "dapr-sidecar-injector-cert"}, &daprSecret)).NotTo(HaveOccurred())
-
-			return bytes.Equal(cmSecret.Data["tls.crt"], daprSecret.Data["tls.crt"]) && bytes.Equal(cmSecret.Data["tls.key"], daprSecret.Data["tls.key"])
-		}, "10s", "100ms").Should(BeTrue(), "the sidecar-injector secret should have been updated with the cert-manager issuer key and cert")
 	})
 })

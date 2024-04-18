@@ -36,7 +36,7 @@
         inherit system;
         overlays = [
           (final: prev: {
-            go = prev.go_1_20;
+            go = prev.go_1_22;
             buildGoApplication = prev.buildGo120Application;
           })
           gomod2nix.overlays.default

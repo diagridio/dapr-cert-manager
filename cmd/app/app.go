@@ -11,8 +11,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	clientv1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/diagridio/dapr-cert-manager/cmd/app/options"
 	"github.com/diagridio/dapr-cert-manager/pkg/controller"
@@ -64,10 +67,13 @@ func NewCommand() *cobra.Command {
 				LeaderElectionReleaseOnCancel: true,
 				ReadinessEndpointName:         "/readyz",
 				HealthProbeBindAddress:        fmt.Sprintf(":%d", opts.ReadyzPort),
-				MetricsBindAddress:            fmt.Sprintf(":%d", opts.MetricsPort),
+				Metrics:                       server.Options{BindAddress: fmt.Sprintf(":%d", opts.MetricsPort)},
 				Logger:                        mlog,
-				Namespace:                     opts.DaprNamespace,
-				LeaderElectionResourceLock:    "leases",
+				NewCache: func(config *rest.Config, o cache.Options) (cache.Cache, error) {
+					o.DefaultNamespaces = map[string]cache.Config{opts.DaprNamespace: {}}
+					return cache.New(config, o)
+				},
+				LeaderElectionResourceLock: "leases",
 			})
 			if err != nil {
 				return fmt.Errorf("failed to create manager: %w", err)
@@ -93,12 +99,10 @@ func NewCommand() *cobra.Command {
 				}
 			}
 
-			if err := controller.AddTrustBundle(ctx, mgr, controller.Options{
+			if err := controller.AddTrustBundle(mgr, controller.Options{
 				Log:                            opts.Logr,
 				DaprNamespace:                  opts.DaprNamespace,
 				TrustBundleCertificateName:     opts.TrustBundleCertificateName,
-				WebhookCertificateName:         opts.WebhookCertificateName,
-				SidecarInjectorCertificateName: opts.SidecarInjectorCertificateName,
 				TrustAnchor:                    taSource,
 			}); err != nil {
 				return err
