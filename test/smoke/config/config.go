@@ -15,8 +15,6 @@ type Config struct {
 
 	DaprNamespace                  string
 	CertificateNameTrustBundle     string
-	CertificateNameWebhook         string
-	CertificateNameSidecarInjector string
 	RestConfig                     *rest.Config
 }
 
@@ -51,7 +49,5 @@ func (c *Config) addFlags(fs *flag.FlagSet) *Config {
 	fs.StringVar(&c.kubeConfig, "kubeconfig-path", kubeConfigFile, "Path to config containing embedded authinfo for kubernetes. Default value is from environment variable "+clientcmd.RecommendedConfigPathEnvVar)
 	fs.StringVar(&c.DaprNamespace, "dapr-namespace", "dapr-system", "The namespace where dapr is installed")
 	fs.StringVar(&c.CertificateNameTrustBundle, "certificate-name-trust-bundle", "dapr-trust-bundle", "The name of the trust-bundle cert-manager Certificate object that is managing the issuer key")
-	fs.StringVar(&c.CertificateNameWebhook, "certificate-name-webhook", "dapr-webhook", "The name of the cert-manager webhook Certificate object that is managing the issuer key")
-	fs.StringVar(&c.CertificateNameSidecarInjector, "certificate-name-sidecar-injector", "dapr-sidecar-injector", "The name of the cert-manager sidecar-injector Certificate object that is managing the issuer key")
 	return c
 }

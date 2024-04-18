@@ -35,8 +35,6 @@ spec:
             # app
           - "--dapr-namespace={{.Values.app.daprNamespace}}"
           - "--trust-bundle-certificate-name={{.Values.app.trustBundleCertificateName}}"
-          - "--sidecar-injector-certificate-name={{.Values.app.sidecarInjectorCertificateName}}"
-          - "--webhook-certificate-name={{.Values.app.webhookCertificateName}}"
           - "--trust-anchor-file-path={{.Values.app.trustAnchorFilePath}}"
 
         {{- if .Values.volumeMounts }}

@@ -55,6 +55,13 @@ func (i *internal) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to load trust bundle from file %q: %w", i.path, err)
 	}
 
+	fs, err := fswatcher.New(fswatcher.Options{
+		Targets: []string{filepath.Dir(i.path)},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create file watcher: %w", err)
+	}
+
 	i.updateBundle(ctx, bundle)
 
 	errCh := make(chan error)
@@ -64,7 +71,7 @@ func (i *internal) Start(ctx context.Context) error {
 
 	go func() {
 		defer cancel()
-		err := fswatcher.Watch(ctx, filepath.Dir(i.path), eventCh)
+		err := fs.Run(ctx, eventCh)
 		// Ignore context canceled errors.
 		if errors.Is(err, context.Canceled) {
 			err = nil

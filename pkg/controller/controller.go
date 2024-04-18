@@ -40,18 +40,6 @@ type Options struct {
 	// Required.
 	TrustBundleCertificateName string
 
-	// WebhookCertificateName is the name of the cert-manager Certificate
-	// which signs and manages the dapr webhook certificate. Must be in the same
-	// namespace as the dapr installation.
-	// Required.
-	WebhookCertificateName string
-
-	// SidecarInjectorCertificateName is the name of the cert-manager Certificate
-	// which signs and manages the dapr sidecar injector certificate. Must be in the same
-	// namespace as the dapr installation.
-	// Required.
-	SidecarInjectorCertificateName string
-
 	// TrustAnchor is used for the trust-bundle trust anchors. If empty the nil,
 	// the `ca.crt` created by cert-manager will be used.
 	TrustAnchor trustanchor.Interface
@@ -319,7 +307,7 @@ func (s *secretCtrl) shouldReconcileSecret(log, dbg logr.Logger,
 // cert-manager Certificate resource, and ensure that the dapr trust-bundle is
 // updated with the latest issuer certificate.
 // Trust anchors are always appended to the trust-bundle, and never removed.
-func AddTrustBundle(ctx context.Context, mgr ctrl.Manager, opts Options) error {
+func AddTrustBundle(mgr ctrl.Manager, opts Options) error {
 	log := opts.Log.WithName("controller").WithName("trust-bundle")
 	lister := mgr.GetCache()
 
@@ -340,26 +328,6 @@ func AddTrustBundle(ctx context.Context, mgr ctrl.Manager, opts Options) error {
 			certSecretCAKey: "ca.crt",
 		})
 	}
-	if len(opts.WebhookCertificateName) > 0 {
-		secCtl.confs = append(secCtl.confs, secretConf{
-			certName:        opts.WebhookCertificateName,
-			certSecretName:  "dapr-webhook-cert",
-			caSecretName:    "dapr-webhook-ca",
-			certSectretKey:  "tls.crt",
-			certSecretPKKey: "tls.key",
-			certSecretCAKey: "caBundle",
-		})
-	}
-	if len(opts.SidecarInjectorCertificateName) > 0 {
-		secCtl.confs = append(secCtl.confs, secretConf{
-			certName:        opts.SidecarInjectorCertificateName,
-			certSecretName:  "dapr-sidecar-injector-cert",
-			caSecretName:    "",
-			certSectretKey:  "tls.crt",
-			certSecretPKKey: "tls.key",
-			certSecretCAKey: "",
-		})
-	}
 
 	if len(secCtl.confs) == 0 {
 		return errors.New("no certificate names provided")
@@ -371,14 +339,13 @@ func AddTrustBundle(ctx context.Context, mgr ctrl.Manager, opts Options) error {
 	controller := ctrl.NewControllerManagedBy(mgr).
 		// Watch the target trust-bundle Secret.
 		For(new(corev1.Secret), builder.OnlyMetadata, builder.WithPredicates(predicate.NewPredicateFuncs(func(obj client.Object) bool {
-			return obj.GetNamespace() == opts.DaprNamespace && stringsContain(obj.GetName(),
-				"dapr-trust-bundle", "dapr-sidecar-injector-cert", "dapr-webhook-ca", "dapr-webhook-cert")
+			return obj.GetNamespace() == opts.DaprNamespace && obj.GetName()== "dapr-trust-bundle"
 		}))).
 
 		// Watch the trust-bundle Certificate resource. Reconcile the Secret on
 		// update.
-		Watches(&source.Kind{Type: new(cmapi.Certificate)}, handler.EnqueueRequestsFromMapFunc(
-			func(obj client.Object) []ctrl.Request {
+		Watches(new(cmapi.Certificate), handler.EnqueueRequestsFromMapFunc(
+			func(ctx context.Context, obj client.Object) []ctrl.Request {
 				var cert cmapi.Certificate
 				err := lister.Get(ctx, client.ObjectKeyFromObject(obj), &cert)
 				if apierrors.IsNotFound(err) {
@@ -408,26 +375,16 @@ func AddTrustBundle(ctx context.Context, mgr ctrl.Manager, opts Options) error {
 			},
 		), builder.OnlyMetadata, builder.WithPredicates(predicate.NewPredicateFuncs(func(obj client.Object) bool {
 			// Only reconcile the cert-manager Certificates we are watching.
-			return obj.GetNamespace() == opts.DaprNamespace && stringsContain(obj.GetName(),
-				opts.TrustBundleCertificateName, opts.WebhookCertificateName, opts.SidecarInjectorCertificateName)
+			return obj.GetNamespace() == opts.DaprNamespace && obj.GetName()== opts.TrustBundleCertificateName
 		})))
 
 	if opts.TrustAnchor != nil {
-		controller.Watches(&source.Channel{Source: opts.TrustAnchor.EventChannel()}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []ctrl.Request {
-			return []ctrl.Request{{NamespacedName: types.NamespacedName{Namespace: opts.DaprNamespace, Name: "dapr-trust-bundle"}}}
-		}))
+		controller = controller.WatchesRawSource(&source.Channel{Source: opts.TrustAnchor.EventChannel()}, handler.EnqueueRequestsFromMapFunc(
+			func(_ context.Context, obj client.Object) []ctrl.Request {
+				return []ctrl.Request{{NamespacedName: types.NamespacedName{Namespace: opts.DaprNamespace, Name: "dapr-trust-bundle"}}}
+			},
+		))
 	}
 
 	return controller.Complete(secCtl)
-}
-
-// stringsContain returns true if the given string is contained in the given
-// slice of strings.
-func stringsContain(s string, ss ...string) bool {
-	for _, v := range ss {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }

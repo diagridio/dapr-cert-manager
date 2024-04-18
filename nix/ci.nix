@@ -141,8 +141,6 @@ let
       ${smoke-binary}/bin/dapr-cert-manager-smoke \
         --dapr-namespace dapr-system \
         --certificate-name-trust-bundle dapr-trust-bundle \
-        --certificate-name-webhook dapr-webhook \
-        --certificate-name-sidecar-injector dapr-sidecar-injector \
         --kubeconfig-path "$TMPDIR/kubeconfig"
     '';
   };

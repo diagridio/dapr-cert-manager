@@ -2,15 +2,11 @@
 
 dapr-cert-manager is a simple controller to allow [dapr](https://dapr.io)
 installations to use Certificates originating from
-[cert-manager](https://cert-manager.io). This controller watches 3 distinct
-cert-manager Certificate objects, one for each dapr PKI component:
-
-- dapr-trust-bundle
-- dapr-sidecar-injector
-- dapr-webhook
+[cert-manager](https://cert-manager.io). This controller watches a
+cert-manager Certificate object for the root `dapr-trust-bundle`.
 
 As and when the corresponding cert-manager Certificate object becomes ready or
-renews, dapr-cert-manager will update the respective Secret(s) object with the
+renews, dapr-cert-manager will update the respective Secret object with the
 latest certificate and key.
 
 Root CA certificates are always appended to, and never replaced.
@@ -36,7 +32,5 @@ available configuration options.
     --namespace dapr-cert-manager \
     --create-namespace \
     --set app.trustBundleCertificateName=dapr-trust-bundle \
-    --set app.sidecarInjectorCertificateName=dapr-sidecar-injector \
-    --set app.webhookCertificateName=dapr-webhook \
     --wait
 ```

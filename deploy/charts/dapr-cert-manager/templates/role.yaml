@@ -23,9 +23,6 @@ rules:
   - "update"
   resourceNames:
   - dapr-trust-bundle
-  - dapr-webhook-cert
-  - dapr-webhook-ca
-  - dapr-sidecar-injector-cert
 - apiGroups:
   - "cert-manager.io"
   resources:
