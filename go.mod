@@ -1,6 +1,6 @@
 module github.com/diagridio/dapr-cert-manager
 
-go 1.23.5
+go 1.22.0
 
 require (
 	github.com/cert-manager/cert-manager v1.16.3
