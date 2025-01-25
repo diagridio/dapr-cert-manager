@@ -339,7 +339,7 @@ func AddTrustBundle(mgr ctrl.Manager, opts Options) error {
 	controller := ctrl.NewControllerManagedBy(mgr).
 		// Watch the target trust-bundle Secret.
 		For(new(corev1.Secret), builder.OnlyMetadata, builder.WithPredicates(predicate.NewPredicateFuncs(func(obj client.Object) bool {
-			return obj.GetNamespace() == opts.DaprNamespace && obj.GetName()== "dapr-trust-bundle"
+			return obj.GetNamespace() == opts.DaprNamespace && obj.GetName() == "dapr-trust-bundle"
 		}))).
 
 		// Watch the trust-bundle Certificate resource. Reconcile the Secret on
@@ -375,15 +375,16 @@ func AddTrustBundle(mgr ctrl.Manager, opts Options) error {
 			},
 		), builder.OnlyMetadata, builder.WithPredicates(predicate.NewPredicateFuncs(func(obj client.Object) bool {
 			// Only reconcile the cert-manager Certificates we are watching.
-			return obj.GetNamespace() == opts.DaprNamespace && obj.GetName()== opts.TrustBundleCertificateName
+			return obj.GetNamespace() == opts.DaprNamespace && obj.GetName() == opts.TrustBundleCertificateName
 		})))
 
 	if opts.TrustAnchor != nil {
-		controller = controller.WatchesRawSource(&source.Channel{Source: opts.TrustAnchor.EventChannel()}, handler.EnqueueRequestsFromMapFunc(
-			func(_ context.Context, obj client.Object) []ctrl.Request {
-				return []ctrl.Request{{NamespacedName: types.NamespacedName{Namespace: opts.DaprNamespace, Name: "dapr-trust-bundle"}}}
-			},
-		))
+		controller = controller.WatchesRawSource(source.Channel(
+			opts.TrustAnchor.EventChannel(),
+			handler.EnqueueRequestsFromMapFunc(
+				func(_ context.Context, obj client.Object) []ctrl.Request {
+					return []ctrl.Request{{NamespacedName: types.NamespacedName{Namespace: opts.DaprNamespace, Name: "dapr-trust-bundle"}}}
+				})))
 	}
 
 	return controller.Complete(secCtl)
