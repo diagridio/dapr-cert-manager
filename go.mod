@@ -1,6 +1,8 @@
 module github.com/diagridio/dapr-cert-manager
 
-go 1.22.0
+go 1.23.0
+
+toolchain go1.24.2
 
 require (
 	github.com/cert-manager/cert-manager v1.16.3
@@ -70,7 +72,7 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/oauth2 v0.23.0 // indirect
+	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
