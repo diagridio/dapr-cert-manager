@@ -1,6 +1,6 @@
 module github.com/diagridio/dapr-cert-manager/test/smoke
 
-go 1.22.0
+go 1.24.2
 
 require (
 	github.com/cert-manager/cert-manager v1.16.3
@@ -42,7 +42,7 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/oauth2 v0.23.0 // indirect
+	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
